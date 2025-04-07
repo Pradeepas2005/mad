@@ -1,0 +1,170 @@
+//implicit intent
+
+        visitButton.setOnClickListener {
+            val url = urlEditText.text.toString()
+            if (url.isNotEmpty()) {
+                val intent = Intent(Intent.ACTION_VIEW)
+                intent.data = Uri.parse(url)
+                startActivity(intent)
+            }
+        }
+
+
+//explicit
+
+        b2.setOnClickListener{
+            val s1=e2.text.toString().toIntOrNull()?:0
+            val s2=e3.text.toString().toIntOrNull()?:0
+val s=s1+s2
+            val i=Intent(this,MainActivity2::class.java)
+            i.putExtra("v",s)
+
+            startActivity(i)
+        }
+
+
+//option menu
+
+//themes.xml
+
+<!-- themes.xml -->
+<style name="Theme.Practice" parent="Theme.AppCompat.Light.DarkActionBar">
+    <!-- Customize your theme here. -->
+</style>
+
+//Menu/options_menu.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<item android:id="@+id/oi1" android:title="oi1"/>
+    <item android:id="@+id/oi2" android:title="oi2"/>
+</menu>
+
+//Out of oncreate
+
+override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+    menuInflater.inflate(R.menu.option_menu,menu)
+    return true
+}
+
+override fun onOptionsItemSelected(item: MenuItem): Boolean {
+    return when(item.itemId){
+        R.id.oi1->{
+            val i=Intent(this,MainActivity2::class.java)
+                   startActivity(i)
+                    true
+        }
+        else -> super.onOptionsItemSelected(item)
+    }
+}
+
+
+
+//context menu-long press
+//1)inside Oncreate
+val tv1: TextView =findViewById(R.id.tv1)
+
+registerForContextMenu(tv1)   tv1->view(text)
+
+//2)out of oncreate
+override fun onCreateContextMenu(
+    menu: ContextMenu?,
+    v: View?,
+    menuInfo: ContextMenu.ContextMenuInfo?
+) {
+    super.onCreateContextMenu(menu, v, menuInfo)
+
+        if(v?.id ==R.id.tv1){
+            menu?.setHeaderTitle("context menu")
+            menu?.add(0,v.id,0,"ci1")
+            menu?.add(0,v.id,1,"ci2")
+
+
+        }
+   }
+
+override fun onContextItemSelected(item: MenuItem): Boolean {
+
+    return when(item.order){
+        0->{ Toast.makeText(this,"context it1m 1",Toast.LENGTH_LONG).show()
+            true
+        }
+        1->{ Toast.makeText(this,"context it1m 2",Toast.LENGTH_LONG).show()
+            true
+        }
+        else->super.onContextItemSelected(item)
+    }
+}
+
+
+
+//popup menu
+1)create button
+2)pop_menu.xml
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/pi1" android:title="pi1"/>
+    <item android:id="@+id/pi2" android:title="pi2"/>
+</menu>
+3)inside oncreate
+val b4:Button=findViewById(R.id.b4)
+b4.setOnClickListener{
+    val p=PopupMenu(this,b4)
+    p.menuInflater.inflate(R.menu.pop_menu,p.menu)
+    p.setOnMenuItemClickListener {item->
+         when(item.itemId){
+            R.id.pi1->{
+                val i=Intent(this,MainActivity2::class.java)
+                startActivity(i)
+                true
+            }
+            else ->false
+        }
+    }
+}
+
+
+
+
+//Alert
+//1)backpressed
+// Exit Confirmation Dialog
+override fun onBackPressed() {
+    val builder = AlertDialog.Builder(this)
+
+    builder.setTitle("Exit Confirmation")
+        .setMessage("Are you sure you want to exit?")
+        .setPositiveButton("Yes") { _, _ ->
+            Toast.makeText(applicationContext, "Exiting", Toast.LENGTH_SHORT).show()
+            finish()
+        }
+        .setNegativeButton("No") { dialog, _ ->
+            dialog.dismiss()
+        }
+        .setNeutralButton("Maybe") { _, _ ->
+            Toast.makeText(applicationContext, "Maybe later", Toast.LENGTH_SHORT).show()
+        }
+        .setCancelable(true)
+        .show()
+}
+
+
+//2)on clicking button
+Inside on create
+
+val b5:Button=findViewById(R.id.b5)
+b5.setOnClickListener{
+    val b= AlertDialog.Builder(this)
+    b.setTitle("alert")
+        .setMessage("close??")
+        .setNegativeButton("close"){dialog,_,->
+            Toast.makeText(this,"context it1m 1",Toast.LENGTH_LONG).show()
+            dialog.dismiss()
+        }
+        .setCancelable(true)
+        .show()
+}
+
+
+
+

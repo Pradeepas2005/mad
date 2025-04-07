@@ -1,0 +1,161 @@
+//Date and time picker
+
+1)
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="24dp">
+
+    <Button
+        android:id="@+id/dateButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Pick Date" />
+
+    <TextView
+        android:id="@+id/selectedDateTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Selected Date"
+        android:layout_marginTop="8dp" />
+
+    <Button
+        android:id="@+id/timeButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Pick Time"
+        android:layout_marginTop="24dp" />
+
+    <TextView
+        android:id="@+id/selectedTimeTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Selected Time"
+        android:layout_marginTop="8dp" />
+
+</LinearLayout>
+2)
+val dateButton: Button = findViewById(R.id.dateButton)
+val timeButton: Button = findViewById(R.id.timeButton)
+val selectedDateTextView: TextView = findViewById(R.id.selectedDateTextView)
+val selectedTimeTextView: TextView = findViewById(R.id.selectedTimeTextView)
+
+val calendar = Calendar.getInstance()
+
+// Date Picker
+dateButton.setOnClickListener {
+    val year = calendar.get(Calendar.YEAR)
+    val month = calendar.get(Calendar.MONTH)
+    val day = calendar.get(Calendar.DAY_OF_MONTH)
+
+    val datePickerDialog = DatePickerDialog(this, { _, selectedYear, selectedMonth, selectedDay ->
+        val formattedDate = "$selectedDay/${selectedMonth + 1}/$selectedYear"
+        selectedDateTextView.text = formattedDate
+    }, year, month, day)
+
+    datePickerDialog.show()
+}
+
+// Time Picker
+timeButton.setOnClickListener {
+    val hour = calendar.get(Calendar.HOUR_OF_DAY)
+    val minute = calendar.get(Calendar.MINUTE)
+
+    val timePickerDialog = TimePickerDialog(this, { _, selectedHour, selectedMinute ->
+        val formattedTime = String.format("%02d:%02d", selectedHour, selectedMinute)
+        selectedTimeTextView.text = formattedTime
+    }, hour, minute, true)
+
+    timePickerDialog.show()
+}
+
+
+
+//status notification
+
+1)
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
+2)Put this outside your onCreate() method:
+private val CHANNEL_ID = "example_channel_id"
+private val NOTIFICATION_ID = 1
+
+private fun createNotificationChannel() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        val name = "Example Channel"
+        val descriptionText = "This is a sample notification channel"
+        val importance = NotificationManager.IMPORTANCE_DEFAULT
+        val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
+            description = descriptionText
+        }
+        val notificationManager: NotificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
+    }
+}
+
+
+3)put this outside onCreate():
+
+private fun sendNotification(sum: Int) {
+    val intent = Intent(this, MainActivity2::class.java)
+    val pendingIntent = PendingIntent.getActivity(
+        this, 0, intent, PendingIntent.FLAG_IMMUTABLE
+    )
+
+    val builder = NotificationCompat.Builder(this, CHANNEL_ID)
+        .setSmallIcon(R.drawable.ic_launcher_foreground) // use your icon
+        .setContentTitle("Addition Result")
+        .setContentText("Sum is $sum")
+        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+        .setContentIntent(pendingIntent)
+        .setAutoCancel(true)
+
+    with(NotificationManagerCompat.from(this)) {
+        if (ActivityCompat.checkSelfPermission(
+                applicationContext,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this@MainActivity,
+                arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                101
+            )
+            return
+        }
+        notify(NOTIFICATION_ID, builder.build())
+    }
+}
+
+
+4)Update your b2.setOnClickListener to call sendNotification(sum):
+
+b2.setOnClickListener {
+    val s1 = e2.text.toString().toIntOrNull() ?: 0
+    val s2 = e3.text.toString().toIntOrNull() ?: 0
+    val s = s1 + s2
+
+    // Launch activity with result
+    val i = Intent(this, MainActivity2::class.java)
+    i.putExtra("v", s)
+    startActivity(i)
+
+    // Show toast
+    Toast.makeText(this, "Sum is $s", Toast.LENGTH_SHORT).show()
+
+    // Show status notification
+    sendNotification(s)
+}
+
+
+5)Call createNotificationChannel() in onCreate()
+
+createNotificationChannel()
+
+
+
+
+

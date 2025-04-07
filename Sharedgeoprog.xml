@@ -1,0 +1,301 @@
+//Shared preference-inside on create
+1)
+
+val etUsername = findViewById<EditText>(R.id.etUsername)
+val etPassword = findViewById<EditText>(R.id.etPassword)
+val btnSave = findViewById<Button>(R.id.btnSave)
+val btnView = findViewById<Button>(R.id.btnView)
+val btnClear = findViewById<Button>(R.id.btnClear)
+val btnDelete = findViewById<Button>(R.id.btnDelete)
+
+val sharedPref = getSharedPreferences("UserPref", Context.MODE_PRIVATE)
+
+btnSave.setOnClickListener {
+    val editor = sharedPref.edit()
+    editor.putString("username", etUsername.text.toString())
+    editor.putString("password", etPassword.text.toString())
+    editor.apply()
+    Toast.makeText(this, "Saved Successfully", Toast.LENGTH_SHORT).show()
+}
+
+btnView.setOnClickListener {
+    val username = sharedPref.getString("username", "No Data")
+    val password = sharedPref.getString("password", "No Data")
+    etUsername.setText(username)
+    etPassword.setText(password)
+}
+
+btnClear.setOnClickListener {
+    etUsername.setText("")
+    etPassword.setText("")
+}
+
+btnDelete.setOnClickListener {
+    val editor = sharedPref.edit()
+    editor.clear()
+    editor.apply()
+    Toast.makeText(this, "Deleted Successfully", Toast.LENGTH_SHORT).show()                                    
+}
+
+2)Login validation
+val btnLogin = findViewById<Button>(R.id.btnLogin)
+
+btnLogin.setOnClickListener {
+    val inputUsername = etUsername.text.toString()
+    val inputPassword = etPassword.text.toString()
+
+    val storedUsername = sharedPref.getString("username", null)
+    val storedPassword = sharedPref.getString("password", null)
+
+    if (storedUsername == null || storedPassword == null) {
+        Toast.makeText(this, "No credentials found. Please save first.", Toast.LENGTH_SHORT).show()
+    } else if (inputUsername == storedUsername && inputPassword == storedPassword) {
+        Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show()
+    } else {
+        Toast.makeText(this, "Invalid Credentials", Toast.LENGTH_SHORT).show()
+    }
+}
+
+
+
+
+
+
+//Map
+Geocoder
+//1)permission
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+
+2)inside oncreate()
+
+val etLat = findViewById<EditText>(R.id.etLat)
+val etLng = findViewById<EditText>(R.id.etLng)
+val btnFetchAddress = findViewById<Button>(R.id.btnFetchAddress)
+val tvAddressResult = findViewById<TextView>(R.id.tvAddressResult)
+
+btnFetchAddress.setOnClickListener {
+    val lat = etLat.text.toString().toDoubleOrNull()
+    val lng = etLng.text.toString().toDoubleOrNull()
+
+    if (lat != null && lng != null) {
+        val address = getAddressFromLatLng(lat, lng)
+        tvAddressResult.text = address ?: "Address not found"
+    } else {
+        Toast.makeText(this, "Invalid latitude or longitude", Toast.LENGTH_SHORT).show()
+    }
+}
+
+
+3)Out of create()
+
+private fun getAddressFromLatLng(lat: Double, lng: Double): String? {
+    return try {
+        val geocoder = Geocoder(this, Locale.getDefault())
+        val addresses = geocoder.getFromLocation(lat, lng, 1)
+        if (!addresses.isNullOrEmpty()) {
+            val address = addresses[0]
+            "${address.getAddressLine(0)}, ${address.locality}, ${address.countryName}"
+        } else {
+            "No address found"
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        "Error fetching address"
+    }
+}
+
+
+
+
+
+
+///Location Based
+
+1. AndroidManifest.xml (Permissions)
+<uses-permission android:name="android.permission.INTERNET"/>
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+
+2. activity_main.xml (Layout)
+
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Thiagarajar College of Engineering"
+        android:textSize="28sp"
+        android:textColor="#009688"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintVertical_bias="0.08" />
+
+    <Button
+        android:id="@+id/show_my_location"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Show My Location"
+        app:layout_constraintTop_toBottomOf="@id/title"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginTop="24dp"/>
+</androidx.constraintlayout.widget.ConstraintLayout>
+
+3. MainActivity.kt (Kotlin Code)
+package com.example.practice
+
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Bundle
+import android.widget.Button
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var locationProviderClient: FusedLocationProviderClient
+    private lateinit var showLocation: Button
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        // Step 2.1: Variable declarations
+        locationProviderClient = LocationServices.getFusedLocationProviderClient(this)
+        showLocation = findViewById(R.id.show_my_location)
+
+        // Step 2.4: OnClickListener
+        showLocation.setOnClickListener {
+            getYourCurrentLocation()
+        }
+    }
+
+    // Step 3.1: Getting current location
+    private fun getYourCurrentLocation() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED &&
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            // Request permission
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                909
+            )
+            return
+        }
+
+        // Step 3.7: Fetching location
+        val task = locationProviderClient.lastLocation
+        task.addOnSuccessListener {
+            if (it != null) {
+                Toast.makeText(
+                    this,
+                    "Latitude: ${it.latitude} \nLongitude: ${it.longitude}",
+                    Toast.LENGTH_LONG
+                ).show()
+            } else {
+                Toast.makeText(
+                    this,
+                    "Your location can't be displayed",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
+
+    // Optional: Handle permission result
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 909 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            getYourCurrentLocation()
+        } else {
+            Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show()
+        }
+    }
+}
+
+
+//progress
+
+1)
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:progress="0"
+        android:max="100"
+        android:layout_marginBottom="20dp"
+        style="@android:style/Widget.DeviceDefault.Light.ProgressBar.Horizontal" />
+
+    <Button
+        android:id="@+id/startButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start Progress" />
+</LinearLayout>
+
+
+2)
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.widget.Button
+import android.widget.ProgressBar
+import androidx.appcompat.app.AppCompatActivity
+
+class MainActivity : AppCompatActivity() {
+    private lateinit var progressBar: ProgressBar
+    private lateinit var startButton: Button
+    private var progressStatus = 0
+    private val handler = Handler(Looper.getMainLooper())
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        progressBar = findViewById(R.id.progressBar)
+        startButton = findViewById(R.id.startButton)
+
+        startButton.setOnClickListener {
+            progressStatus = 0
+            Thread {
+                while (progressStatus < 100) {
+                    progressStatus += 1
+                    Thread.sleep(50)
+                    handler.post {
+                        progressBar.progress = progressStatus
+                    }
+                }
+            }.start()
+        }
+    }
+}
+
+
